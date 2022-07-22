@@ -2589,6 +2589,8 @@ Status CameraService::connectHelper(const sp<CALLBACK>& cameraCb, const std::str
             clientAttribution.packageName.value_or(kUnknownPackageName);
     sCurrPackageName = clientPackageName;
 
+    sCurrPackageName = clientPackageName;
+
     {
         // Acquire mServiceLock and prevent other clients from connecting
         std::unique_ptr<AutoConditionLock> lock =
