@@ -2051,8 +2051,7 @@ status_t AudioFlinger::listAppVolumes(std::vector<media::AppVolume> *vols)
 {
     std::set<media::AppVolume> volSet;
     audio_utils::lock_guard _l(mutex());
-    for (size_t i = 0; i < mPlaybackThreads.size(); i++) {
-        sp<IAfPlaybackThread> thread = mPlaybackThreads.valueAt(i);
+    for (const auto& [_, thread] : mPlaybackThreads) {
         thread->listAppVolumes(volSet);
     }
 
@@ -2064,8 +2063,7 @@ status_t AudioFlinger::listAppVolumes(std::vector<media::AppVolume> *vols)
 status_t AudioFlinger::setAppVolume(const String8& packageName, const float value)
 {
     audio_utils::lock_guard _l(mutex());
-    for (size_t i = 0; i < mPlaybackThreads.size(); i++) {
-        sp<IAfPlaybackThread> t = mPlaybackThreads.valueAt(i);
+    for (const auto& [_, t] : mPlaybackThreads) {
         t->setAppVolume(packageName, value);
     }
 
@@ -2084,8 +2082,7 @@ status_t AudioFlinger::setAppVolume(const String8& packageName, const float valu
 status_t AudioFlinger::setAppMute(const String8& packageName, const bool value)
 {
     audio_utils::lock_guard _l(mutex());
-    for (size_t i = 0; i < mPlaybackThreads.size(); i++) {
-        sp<IAfPlaybackThread> t = mPlaybackThreads.valueAt(i);
+    for (const auto& [_, t] : mPlaybackThreads) {
         t->setAppMute(packageName, value);
     }
 

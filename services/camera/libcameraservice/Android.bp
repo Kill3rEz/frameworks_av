@@ -371,3 +371,11 @@ genrule {
         "statslog_framework.cpp",
     ],
 }
+
+cc_library_static {
+    name: "libcameraservice_ext_lib",
+    srcs: [
+        "common/CameraProviderExtension.cpp",
+    ],
+    export_include_dirs: ["."],
+}
