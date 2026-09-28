@@ -2634,13 +2634,18 @@ status_t Camera3Device::configureStreamsLocked(int operatingMode,
     }
 
 #ifdef CAMERA_PACKAGE_NAME
-    sp<VendorTagDescriptor> vTags;
-    sp<VendorTagDescriptorCache> vCache = VendorTagDescriptorCache::getGlobalVendorTagCache();
-    if (vCache.get()) {
-        const camera_metadata_t *metaBuffer = sessionParams.getAndLock();
-        metadata_vendor_id_t vendorId = get_camera_metadata_vendor_id(metaBuffer);
-        sessionParams.unlock(metaBuffer);
-        vCache->getVendorTagDescriptor(vendorId, &vTags);
+    {
+        sp<VendorTagDescriptor> vTags;
+        sp<VendorTagDescriptorCache> vCache = VendorTagDescriptorCache::getGlobalVendorTagCache();
+        if (vCache.get()) {
+            const camera_metadata_t *metaBuffer = sessionParams.getAndLock();
+            metadata_vendor_id_t vendorId = get_camera_metadata_vendor_id(metaBuffer);
+            sessionParams.unlock(metaBuffer);
+            vCache->getVendorTagDescriptor(vendorId, &vTags);
+        }
+        if (vTags.get() == nullptr) {
+            vTags = VendorTagDescriptor::getGlobalVendorTagDescriptor();
+        }
         uint32_t tag;
         if (CameraMetadata::getTagFromName(CAMERA_PACKAGE_NAME, vTags.get(), &tag)) {
             ALOGE("%s: Unable to get %s tag", __FUNCTION__, CAMERA_PACKAGE_NAME);
