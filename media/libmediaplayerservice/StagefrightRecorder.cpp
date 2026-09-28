@@ -37,6 +37,8 @@
 #include "StagefrightRecorder.h"
 
 #include <algorithm>
+#include <map>
+#include <mutex>
 
 #include <android-base/properties.h>
 #include <android/hardware/ICamera.h>
@@ -177,7 +179,29 @@ StagefrightRecorder::StagefrightRecorder(const AttributionSourceState& client)
     reset();
 }
 
+// [PATCH OPLUSHDR] Kept out of the class so its layout still matches the
+// prebuilt ExtendedSFRecorder in libavenhancements.
+static std::mutex sOplusUserDataLock;
+static std::map<const StagefrightRecorder*, AString> sOplusUserData;
+
+static void setOplusUserData(const StagefrightRecorder* r, const AString& v) {
+    std::lock_guard<std::mutex> l(sOplusUserDataLock);
+    sOplusUserData[r] = v;
+}
+
+static AString getOplusUserData(const StagefrightRecorder* r) {
+    std::lock_guard<std::mutex> l(sOplusUserDataLock);
+    auto it = sOplusUserData.find(r);
+    return it == sOplusUserData.end() ? AString() : it->second;
+}
+
+static void clearOplusUserData(const StagefrightRecorder* r) {
+    std::lock_guard<std::mutex> l(sOplusUserDataLock);
+    sOplusUserData.erase(r);
+}
+
 StagefrightRecorder::~StagefrightRecorder() {
+    clearOplusUserData(this);
     ALOGV("Destructor");
     stop();
 
@@ -1202,7 +1226,7 @@ status_t StagefrightRecorder::setParameter(
         return setLogSessionId(value);
     } else if (key == "OplusUserData") {
         // [PATCH OPLUSHDR] Record and pass parameter to Muxer
-        mOplusUserData = value.c_str();
+        setOplusUserData(this, AString(value.c_str()));
         return OK;
     } else if (key == "set-title") {
         return OK;
@@ -2549,8 +2573,9 @@ void StagefrightRecorder::setupMPEG4orWEBMMetaData(sp<MetaData> *meta) {
     }
 
     // [PATCH OPLUSHDR] Pass metadata to MPEG4Writer
-    if (!mOplusUserData.empty()) {
-        (*meta)->setCString(kKeyOplusUserData, mOplusUserData.c_str());
+    AString oplusUserData = getOplusUserData(this);
+    if (!oplusUserData.empty()) {
+        (*meta)->setCString(kKeyOplusUserData, oplusUserData.c_str());
     }
 }
 
